@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #00558e; }
+  :root {
+    --vcc: #00558e;
+    --font: 'VAGRounded','VAG Rounded','Nunito','Varela Round',ui-rounded,system-ui,sans-serif;
+    --white: #ffffff;
+    --muted: rgba(255,255,255,0.55);
+    --label: rgba(255,255,255,0.72);
+    --border: rgba(255,255,255,0.15);
+  }
+  .ticker-strip {
+    background: var(--vcc);
+    width: 100%; height: 100vh;
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    font-family: var(--font);
+  }
+  .ticker-accent { width: 8px; background: rgba(255,255,255,0.4); flex-shrink: 0; }
+  .ticker-heading {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 3vw; flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    min-width: 12vw;
+  }
+  .tk-day-label { font-size: 1.4vh; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label); }
+  .tk-day-name { font-size: 3.5vh; font-weight: 500; color: var(--white); line-height: 1.1; margin-top: 0.4vh; }
+  .ticker-viewport { flex: 1; overflow: hidden; position: relative; }
+  .ticker-slide {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center;
+    padding: 0 3vw;
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  .ticker-slide.active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .ticker-slide.exiting {
+    opacity: 0;
+    transform: translateY(-100%);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .slide-time { font-size: 1.5vh; color: var(--label); margin-bottom: 0.4vh; }
+  .slide-title { font-size: 2.8vh; font-weight: 500; color: var(--white); }
+  .slide-detail { font-size: 1.6vh; color: var(--muted); margin-top: 0.3vh; }
+  .ticker-dots {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 6px; padding: 0 2vw; flex-shrink: 0;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.25); transition: background 0.4s; }
+  .dot.active { background: rgba(255,255,255,0.9); }
+</style>
+</head>
+<body>
+<div class="ticker-strip">
+  <div class="ticker-accent"></div>
+  <div class="ticker-heading">
+    <span class="tk-day-label">Events</span>
+    <span class="tk-day-name">Today</span>
+  </div>
+  <div class="ticker-viewport" id="ticker-viewport"></div>
+  <div class="ticker-dots" id="ticker-dots"></div>
+</div>
+<script>
+// ── EVENTS ── Replace with Power Automate / Compass API feed
+const EVENTS = [
+  {time:"8:50 am",  title:"TAFE — Allied Health",      detail:"Bendigo City Campus · 3 students"},
+  {time:"8:50 am",  title:"TAFE — Animal Care",         detail:"Charleston Road Campus · 2 students"},
+  {time:"8:50 am",  title:"TAFE — Salon Assistant",     detail:"Bendigo City Campus · 1 student"},
+  {time:"8:50 am",  title:"TAFE — Automotive",          detail:"Charleston Road Campus · 1 student"},
+];
+
+let currentSlide=0, sliding=false;
+
+function buildTicker(){
+  const vp=document.getElementById("ticker-viewport");
+  const dotsEl=document.getElementById("ticker-dots");
+  if(EVENTS.length===0){
+    vp.innerHTML='<div style="display:flex;align-items:center;padding:0 3vw;height:100%;"><span style="font-size:2.4vh;color:rgba(255,255,255,0.4);font-family:var(--font);">No events today</span></div>';
+    return;
+  }
+  EVENTS.forEach((ev,i)=>{
+    const slide=document.createElement("div");
+    slide.className="ticker-slide"+(i===0?" active":"");
+    slide.id="slide-"+i;
+    slide.innerHTML=`<div>
+      <div class="slide-time">${ev.time}</div>
+      <div class="slide-title">${ev.title}</div>
+      ${ev.detail?`<div class="slide-detail">${ev.detail}</div>`:""}
+    </div>`;
+    vp.appendChild(slide);
+    const dot=document.createElement("div");
+    dot.className="dot"+(i===0?" active":"");
+    dot.id="dot-"+i;
+    dotsEl.appendChild(dot);
+  });
+}
+
+function goToSlide(next){
+  if(sliding||EVENTS.length<=1)return;
+  sliding=true;
+  const curr=document.getElementById("slide-"+currentSlide);
+  const nextEl=document.getElementById("slide-"+next);
+  document.getElementById("dot-"+currentSlide).classList.remove("active");
+  curr.classList.add("exiting");
+  curr.classList.remove("active");
+  setTimeout(()=>{
+    curr.classList.remove("exiting");
+    nextEl.classList.add("active");
+    document.getElementById("dot-"+next).classList.add("active");
+    currentSlide=next;
+    sliding=false;
+  },800);
+}
+
+buildTicker();
+if(EVENTS.length>1) setInterval(()=>goToSlide((currentSlide+1)%EVENTS.length),8000);
+</script>
+</body>
+</html>

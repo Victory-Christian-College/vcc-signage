@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #00558e; }
+  :root {
+    --vcc: #00558e;
+    --font: 'VAGRounded','VAG Rounded','Nunito','Varela Round',ui-rounded,system-ui,sans-serif;
+    --white: #ffffff;
+    --muted: rgba(255,255,255,0.55);
+    --label: rgba(255,255,255,0.72);
+    --border: rgba(255,255,255,0.15);
+    --card: rgba(0,0,0,0.2);
+  }
+  body { font-family: var(--font); }
+  .panel {
+    background: var(--vcc);
+    width: 100%; height: 100vh;
+    display: flex; flex-direction: column;
+    padding: 4vh 3.5vw;
+  }
+  .section { display: flex; flex-direction: column; justify-content: center; flex: 1; }
+  .divider { height: 1px; background: var(--border); margin: 1.5vh 0; flex-shrink: 0; }
+  .label { font-size: 1.3vh; letter-spacing: 0.1em; text-transform: uppercase; color: var(--label); margin-bottom: 1vh; }
+  .clock { font-size: 8vh; font-weight: 500; color: var(--white); letter-spacing: -2px; font-variant-numeric: tabular-nums; line-height: 1; }
+  .date { font-size: 2vh; color: var(--muted); margin-top: 0.8vh; }
+  .period-name { font-size: 4.5vh; font-weight: 500; color: var(--white); line-height: 1.15; }
+  .period-time { font-size: 2vh; color: var(--muted); margin-top: 0.6vh; }
+  .progress-bar { width: 100%; height: 0.5vh; background: rgba(255,255,255,0.15); border-radius: 1vh; margin-top: 1.5vh; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 1vh; background: rgba(255,255,255,0.8); transition: width 1s linear; }
+  .uv-row { display: flex; align-items: center; gap: 1.5vh; flex-wrap: wrap; }
+  .uv-badge {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 1vh; padding: 1.2vh 2vh; min-width: 8vh;
+  }
+  .uv-num { font-size: 4vh; font-weight: 500; line-height: 1; }
+  .uv-cat { font-size: 1.4vh; color: var(--muted); margin-top: 0.5vh; }
+  .hat-box {
+    display: flex; flex-direction: column; align-items: center; gap: 0.6vh;
+    padding: 1.2vh 1.8vh;
+    background: rgba(253,186,116,0.15);
+    border: 1px solid rgba(253,186,116,0.4);
+    border-radius: 1vh;
+  }
+  .hat-label { font-size: 1.3vh; text-transform: uppercase; letter-spacing: 0.07em; color: #fdba74; white-space: nowrap; }
+  .uv-low   { color: #a8f0c0; }
+  .uv-mod   { color: #fde68a; }
+  .uv-high  { color: #fdba74; }
+  .uv-vhigh { color: #fca5a5; }
+  .uv-ext   { color: #f0abfc; }
+</style>
+</head>
+<body>
+<div class="panel">
+
+  <div class="section">
+    <div class="label">Time</div>
+    <div class="clock" id="clock">--:--</div>
+    <div class="date" id="date">--</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="label">Current period</div>
+    <div class="period-name" id="period-name">Loading…</div>
+    <div class="period-time" id="period-time"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="label">UV index</div>
+    <div class="uv-row">
+      <div class="uv-badge">
+        <span class="uv-num uv-low" id="uv-num">–</span>
+        <span class="uv-cat" id="uv-cat">–</span>
+      </div>
+      <div id="hat-box" style="display:none;">
+        <div class="hat-box">
+          <svg viewBox="0 0 32 24" fill="none" style="width:5vh;height:3.8vh;">
+            <ellipse cx="16" cy="18" rx="14" ry="3.5" fill="#fdba74"/>
+            <path d="M9 18 C9 18 9.5 8 16 8 C22.5 8 23 18 23 18 Z" fill="#fdba74"/>
+            <path d="M9.5 15.5 C9.5 15.5 11 13.5 16 13.5 C21 13.5 22.5 15.5 22.5 15.5" stroke="#00558e" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <line x1="16" y1="4" x2="16" y2="2" stroke="#fdba74" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="20.5" y1="5.2" x2="21.5" y2="3.5" stroke="#fdba74" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="11.5" y1="5.2" x2="10.5" y2="3.5" stroke="#fdba74" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="23" y1="8" x2="25" y2="7" stroke="#fdba74" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="9" y1="8" x2="7" y2="7" stroke="#fdba74" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <span class="hat-label">Hats on!</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+// ── BELL TIMES (VCC) ──
+const TIMETABLE = [
+  {name:"Homeroom",         start:"08:50", end:"09:05"},
+  {name:"Period 1",         start:"09:05", end:"09:50"},
+  {name:"Period 2",         start:"09:50", end:"10:35"},
+  {name:"Period 3",         start:"10:35", end:"11:20"},
+  {name:"Recess",           start:"11:20", end:"11:40"},
+  {name:"Period 4",         start:"11:40", end:"12:25"},
+  {name:"Period 5",         start:"12:25", end:"13:10"},
+  {name:"Lunch",            start:"13:10", end:"13:50"},
+  {name:"Period 6",         start:"13:50", end:"14:30"},
+  {name:"Period 7",         start:"14:30", end:"15:20"},
+  {name:"Home time",        start:"15:20", end:"17:00"},
+];
+const LAT=-36.7582, LON=144.2788;
+
+function timeToMins(t){const[h,m]=t.split(":").map(Number);return h*60+m;}
+function getNowMins(){const n=new Date();return n.getHours()*60+n.getMinutes();}
+function fmt12(t){if(!t)return"";const[h,m]=t.split(":").map(Number);return`${h%12||12}:${String(m).padStart(2,"0")} ${h>=12?"pm":"am"}`;}
+
+function getCurrentPeriod(){
+  const now=getNowMins();
+  for(const p of TIMETABLE){
+    const s=timeToMins(p.start),e=timeToMins(p.end);
+    if(now>=s&&now<e)return{...p,progress:Math.round((now-s)/(e-s)*100)};
+  }
+  for(let i=0;i<TIMETABLE.length-1;i++){
+    const c=TIMETABLE[i],n=TIMETABLE[i+1];
+    if(getNowMins()>=timeToMins(c.end)&&getNowMins()<timeToMins(n.start))
+      return{name:`${n.name} next`,start:c.end,end:n.start,progress:0};
+  }
+  return{name:"No school",start:"",end:"",progress:0};
+}
+
+function uvClass(uv){
+  if(uv<3)return["uv-low","Low"];
+  if(uv<6)return["uv-mod","Moderate"];
+  if(uv<8)return["uv-high","High"];
+  if(uv<11)return["uv-vhigh","Very high"];
+  return["uv-ext","Extreme"];
+}
+
+function updateClock(){
+  const now=new Date();
+  const h=now.getHours(),m=String(now.getMinutes()).padStart(2,"0");
+  document.getElementById("clock").textContent=`${h%12||12}:${m} ${h>=12?"pm":"am"}`;
+  const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  document.getElementById("date").textContent=`${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+
+function updatePeriod(){
+  const p=getCurrentPeriod();
+  document.getElementById("period-name").textContent=p.name;
+  document.getElementById("period-time").textContent=(p.start&&p.end)?`${fmt12(p.start)} – ${fmt12(p.end)}`:"";
+  document.getElementById("progress-fill").style.width=p.progress+"%";
+}
+
+async function fetchUV(){
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=uv_index&timezone=Australia%2FMelbourne`);
+    const d=await r.json();
+    const uv=Math.round(d.current.uv_index*10)/10;
+    const[cls,cat]=uvClass(uv);
+    const el=document.getElementById("uv-num");
+    el.textContent=uv.toFixed(1);el.className="uv-num "+cls;
+    document.getElementById("uv-cat").textContent=cat;
+    document.getElementById("hat-box").style.display=uv>=3?"":"none";
+  }catch(e){
+    document.getElementById("uv-num").textContent="N/A";
+  }
+}
+
+updateClock(); updatePeriod(); fetchUV();
+setInterval(updateClock,1000);
+setInterval(updatePeriod,30000);
+setInterval(fetchUV,600000);
+</script>
+</body>
+</html>
